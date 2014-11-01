@@ -107,3 +107,6 @@ INSERT INTO OWNS(login, symbol, shares) values('mike', 'RE', 50);
 
 `MUTUALDATE`
 INSERT INTO MUTUALDATE(c_date) values('04-APR-14');
+
+--commit!
+commit;
