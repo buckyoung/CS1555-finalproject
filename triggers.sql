@@ -1,8 +1,6 @@
-DROP TRIGGER balance_update;
-DROP FUNCTION UpdateBalance;
+DROP TABLE trxlog_edits;
 DROP FUNCTION GrabPrice;
 DROP PROCEDURE MakePurchases;
-DROP TRIGGER deposit_trigger;
 
 CREATE OR REPLACE TRIGGER balance_update
 	
@@ -14,28 +12,8 @@ CREATE OR REPLACE TRIGGER balance_update
 	BEGIN
 
 		UPDATE customer 
-		SET balance = UpdateBalance( balance, :new.symbol, :new.num_shares )
+		SET balance = ( balance + :new.amount )
 		WHERE login = :new.login;
-
-	END;
-/
-
-CREATE OR REPLACE FUNCTION UpdateBalance( balance FLOAT, symb VARCHAR2, num_shares INT )
-
-	RETURN FLOAT IS
-	new_bal FLOAT := 0;
-
-	fund_price FLOAT := 0;
-	t_date DATE := SELECT TO_DATE( SELECT * FROM MUTUALDATE, 'DD-MON-YY' ) - 1 FROM DUAL;
-
-	BEGIN
-	
-		SELECT price INTO fund_price FROM CLOSINGPRICE
-		WHERE ( symbol = symb AND p_date = t_date );
-
-		new_bal := balance + ( fund_price * num_shares );
-
-		RETURN new_bal;
 
 	END;
 /
@@ -44,9 +22,11 @@ CREATE OR REPLACE FUNCTION GrabPrice( symb VARCHAR2 )
 
 	RETURN FLOAT IS
 	ret_price FLOAT := 0;
-	t_date DATE := SELECT TO_DATE( SELECT * FROM MUTUALDATE, 'DD-MON-YY' ) - 1 FROM DUAL;
+	t_date DATE;
 
 	BEGIN
+
+		SELECT TO_DATE( ( SELECT * FROM mutualdate where rownum = 1 ), 'DD-MON-YY' ) - 1 INTO t_date FROM dual;
 	
 		SELECT price INTO ret_price FROM CLOSINGPRICE
 		WHERE ( symbol = symb AND p_date = t_date );
@@ -65,27 +45,74 @@ CREATE OR REPLACE TRIGGER deposit_trigger
 
 	BEGIN
 
-		MakePurchases( :new.login, :new.amount );
+		MakePurchases( :new.login, :new.amount, :new.trans_id );
 
 	END;
 /
 
-CREATE OR REPLACE PROCEDURE MakePurchases( login_name VARCHAR2, dep_amnt FLOAT )
+CREATE OR REPLACE TRIGGER deposit_trigger_update
+
+	AFTER INSERT
+	ON trxlog
+
+	DECLARE
+		CURSOR trxlog_temp IS
+		SELECT * FROM trxlog_edits;
+		trxlog_row trxlog_edits%ROWTYPE;
+		t_id INT := 0;
+
+	BEGIN
+
+		DELETE FROM trxlog_edits;
+
+		IF NOT trxlog_temp%ISOPEN
+			THEN OPEN trxlog_temp;
+		END IF;
+
+		LOOP
+			FETCH trxlog_temp INTO trxlog_row;
+			EXIT WHEN trxlog_temp%NOTFOUND;
+			SELECT MAX(trans_id) + 1 INTO t_id FROM trxlog;
+			
+			INSERT INTO trxlog ( trans_id, login, symbol, t_date, action, num_shares, price, amount )
+				VALUES ( t_id, trxlog_row.login, trxlog_row.symbol, trxlog_row.t_date, trxlog_row.action, trxlog_row.num_shares, trxlog_row.price, trxlog_row.amount );
+
+		END LOOP;
+
+		CLOSE trxlog_temp;
+
+	END;
+/
+
+CREATE GLOBAL TEMPORARY TABLE trxlog_edits ( 	trans_id INT,
+						login VARCHAR2(10),
+						symbol VARCHAR2(20),
+						t_date DATE,
+						action VARCHAR2(10),
+						num_shares INT,
+						price FLOAT,
+						amount FLOAT )
+			ON COMMIT DELETE ROWS;
+
+CREATE OR REPLACE PROCEDURE MakePurchases( login_name VARCHAR2, dep_amnt FLOAT, t_id INT )
 	IS 
 
 	CURSOR pref_cursor IS SELECT * FROM prefers
 		WHERE ( allocation_no = ( SELECT allocation_no FROM 
 			( SELECT * FROM ALLOCATION ORDER BY allocation_no DESC )
 			WHERE rownum = 1 ) );
+
 	pref_row prefers%ROWTYPE;
-	
+
 	partial_dep FLOAT := 0.0;
 	num_shares INT := 0;
-	new_id INT := 0;
-	t_date DATE := SELECT TO_DATE( SELECT * FROM MUTUALDATE, 'DD-MON-YY' ) - 1 FROM DUAL;
+	t_date DATE;
 	leftover FLOAT := 0.0;
-	
+	already_owned INT := 0;	
+
 	BEGIN
+
+		SELECT TO_DATE( ( SELECT * FROM mutualdate WHERE rownum = 1 ), 'DD-MON-YY' ) - 1 INTO t_date FROM dual;
 
 		IF NOT pref_cursor%ISOPEN
 			THEN OPEN pref_cursor;
@@ -95,22 +122,33 @@ CREATE OR REPLACE PROCEDURE MakePurchases( login_name VARCHAR2, dep_amnt FLOAT )
 			FETCH pref_cursor INTO pref_row;
 			EXIT WHEN pref_cursor%NOTFOUND;
 			partial_dep := pref_row.percentage * dep_amnt;
-			num_shares := partial_dep \ GrabPrice( pref_row.symbol );
-			SELECT MAX(trans_id) INTO new_id FROM TRXLOG;
-			new_id  := new_id + 1;
+			SELECT trunc( partial_dep / GrabPrice( pref_row.symbol ) ) INTO num_shares from dual;
 
-			INSERT INTO trxlog (trans_id, login, symbol, t_date, action, num_shares, price, amount)
-				VALUES ( new_id, login_name, pref_row.symbol, t_date, 'buy', num_shares, 
+			SELECT COUNT(*) into already_owned FROM owns WHERE ( login = login_name AND symbol = pref_row.symbol );
+
+			IF already_owned = 1 THEN
+				UPDATE owns
+				SET shares = ( shares + num_shares )
+				WHERE ( login = login_name AND symbol = pref_row.symbol );			
+			ELSE
+				INSERT INTO owns (login, symbol, shares)
+				VALUES ( login_name, pref_row.symbol, num_shares );
+			END IF;
+
+			INSERT INTO trxlog_edits ( trans_id, login, symbol, t_date, action, num_shares, price, amount)
+				VALUES ( t_id, login_name, pref_row.symbol, t_date, 'buy', num_shares, 
 				GrabPrice( pref_row.symbol ), GrabPrice( pref_row.symbol ) * num_shares );
 
-			leftover := leftover + ( dep_amnt - ( num_shares * GrabPrice( pref_row.symbol ) );
+			leftover := leftover + ( partial_dep - ( num_shares * GrabPrice( pref_row.symbol ) ) );
+
+			
 
 		END LOOP;
 
 		CLOSE pref_cursor;
 
 		UPDATE customer
-		SET balance = leftover
+		SET balance = balance + leftover
 		WHERE login = login_name;
 
 	END;
@@ -125,4 +163,5 @@ CREATE OR REPLACE PROCEDURE MakePurchases( login_name VARCHAR2, dep_amnt FLOAT )
 -- Run order: db.sql -> data.sql -> triggers.sql
 
 INSERT INTO TRXLOG(trans_id, login, symbol, t_date, action, num_shares, price, amount) values(4, 'mike', 'RE', '04-APR-14', 'sell', 50, 15, 750);
+select balance from customer where login = 'mike';
 INSERT INTO TRXLOG(trans_id, login, symbol, t_date, action, num_shares, price, amount) values(5, 'mike', NULL, '04-APR-14', 'deposit', NULL, NULL, 1000);
