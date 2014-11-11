@@ -36,54 +36,6 @@ CREATE OR REPLACE FUNCTION GrabPrice( symb VARCHAR2 )
 	END;
 /
 
-CREATE OR REPLACE TRIGGER deposit_trigger
-
-	AFTER INSERT
-	ON trxlog
-	FOR EACH ROW
-	WHEN ( new.action = 'deposit' )
-
-	BEGIN
-
-		MakePurchases( :new.login, :new.amount, :new.trans_id );
-
-	END;
-/
-
-CREATE OR REPLACE TRIGGER deposit_trigger_update
-
-	AFTER INSERT
-	ON trxlog
-
-	DECLARE
-		CURSOR trxlog_temp IS
-		SELECT * FROM trxlog_edits;
-		trxlog_row trxlog_edits%ROWTYPE;
-		t_id INT := 0;
-
-	BEGIN
-
-		DELETE FROM trxlog_edits;
-
-		IF NOT trxlog_temp%ISOPEN
-			THEN OPEN trxlog_temp;
-		END IF;
-
-		LOOP
-			FETCH trxlog_temp INTO trxlog_row;
-			EXIT WHEN trxlog_temp%NOTFOUND;
-			SELECT MAX(trans_id) + 1 INTO t_id FROM trxlog;
-			
-			INSERT INTO trxlog ( trans_id, login, symbol, t_date, action, num_shares, price, amount )
-				VALUES ( t_id, trxlog_row.login, trxlog_row.symbol, trxlog_row.t_date, trxlog_row.action, trxlog_row.num_shares, trxlog_row.price, trxlog_row.amount );
-
-		END LOOP;
-
-		CLOSE trxlog_temp;
-
-	END;
-/
-
 CREATE GLOBAL TEMPORARY TABLE trxlog_edits ( 	trans_id INT,
 						login VARCHAR2(10),
 						symbol VARCHAR2(20),
@@ -151,6 +103,63 @@ CREATE OR REPLACE PROCEDURE MakePurchases( login_name VARCHAR2, dep_amnt FLOAT, 
 		SET balance = balance + leftover
 		WHERE login = login_name;
 
+	END;
+/
+						
+CREATE OR REPLACE TRIGGER deposit_trigger
+
+	AFTER INSERT
+	ON trxlog
+	FOR EACH ROW
+	WHEN ( new.action = 'deposit' )
+
+	BEGIN
+
+		MakePurchases( :new.login, :new.amount, :new.trans_id );
+
+	END;
+/
+
+CREATE OR REPLACE TRIGGER deposit_trigger_update
+
+	AFTER INSERT
+	ON trxlog
+
+	DECLARE
+	
+		CURSOR trxlog_temp IS
+		SELECT * FROM trxlog_edits;
+		trxlog_row trxlog_edits%ROWTYPE;
+		t_id INT := 0;
+		has_rows INT := 0;
+		
+	BEGIN
+
+		SELECT COUNT(*) INTO has_rows FROM trxlog_edits;
+	
+		IF has_rows > 0 THEN
+		
+			DELETE FROM trxlog_edits;
+
+			IF NOT trxlog_temp%ISOPEN
+				THEN OPEN trxlog_temp;
+			END IF;
+
+			LOOP
+				FETCH trxlog_temp INTO trxlog_row;
+				EXIT WHEN trxlog_temp%NOTFOUND;
+				
+				SELECT MAX(trans_id) + 1 INTO t_id FROM trxlog;
+				
+				INSERT INTO trxlog ( trans_id, login, symbol, t_date, action, num_shares, price, amount )
+					VALUES ( t_id, trxlog_row.login, trxlog_row.symbol, trxlog_row.t_date, trxlog_row.action, trxlog_row.num_shares, trxlog_row.price, trxlog_row.amount );
+
+			END LOOP;
+
+			CLOSE trxlog_temp;
+			
+		END IF;
+		
 	END;
 /
 
