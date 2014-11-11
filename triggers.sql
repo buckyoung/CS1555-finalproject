@@ -128,7 +128,7 @@ CREATE OR REPLACE TRIGGER deposit_trigger_update
 	DECLARE
 	
 		CURSOR trxlog_temp IS
-		SELECT * FROM trxlog_edits;
+			SELECT * FROM trxlog_edits;
 		trxlog_row trxlog_edits%ROWTYPE;
 		t_id INT := 0;
 		has_rows INT := 0;
@@ -139,11 +139,11 @@ CREATE OR REPLACE TRIGGER deposit_trigger_update
 	
 		IF has_rows > 0 THEN
 		
-			DELETE FROM trxlog_edits;
-
-			IF NOT trxlog_temp%ISOPEN
-				THEN OPEN trxlog_temp;
+			IF NOT trxlog_temp%ISOPEN THEN 
+				OPEN trxlog_temp;
 			END IF;
+
+			DELETE FROM trxlog_edits;
 
 			LOOP
 				FETCH trxlog_temp INTO trxlog_row;
@@ -171,6 +171,8 @@ CREATE OR REPLACE TRIGGER deposit_trigger_update
 
 -- Run order: db.sql -> data.sql -> triggers.sql
 
+select balance from customer where login = 'mike';
 INSERT INTO TRXLOG(trans_id, login, symbol, t_date, action, num_shares, price, amount) values(4, 'mike', 'RE', '04-APR-14', 'sell', 50, 15, 750);
 select balance from customer where login = 'mike';
 INSERT INTO TRXLOG(trans_id, login, symbol, t_date, action, num_shares, price, amount) values(5, 'mike', NULL, '04-APR-14', 'deposit', NULL, NULL, 1000);
+select * from trxlog where trans_id > 5;
