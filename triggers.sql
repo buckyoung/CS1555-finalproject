@@ -2,6 +2,10 @@ DROP TABLE trxlog_edits;
 DROP FUNCTION GrabPrice;
 DROP PROCEDURE MakePurchases;
 
+-- A trigger to update the balance. 
+---- Assume that the insert statement that sets off the trigger
+---- Contains the amount of the sale (this seems to be the case based on sample data)
+
 CREATE OR REPLACE TRIGGER balance_update
 	
 	AFTER INSERT
@@ -17,6 +21,9 @@ CREATE OR REPLACE TRIGGER balance_update
 
 	END;
 /
+
+-- A function to grab the price of a symbol based on the date before the one stored in MUTUALDATES
+---- Assume that all triggers using this function are on NEW data, i.e. data that is being done on the date of MUTUALDATE
 
 CREATE OR REPLACE FUNCTION GrabPrice( symb VARCHAR2 )
 
@@ -36,6 +43,8 @@ CREATE OR REPLACE FUNCTION GrabPrice( symb VARCHAR2 )
 	END;
 /
 
+-- A global temporary table whose existence is to get around the mutating table error
+
 CREATE GLOBAL TEMPORARY TABLE trxlog_edits ( 	trans_id INT,
 						login VARCHAR2(10),
 						symbol VARCHAR2(20),
@@ -45,6 +54,13 @@ CREATE GLOBAL TEMPORARY TABLE trxlog_edits ( 	trans_id INT,
 						price FLOAT,
 						amount FLOAT )
 			ON COMMIT DELETE ROWS;
+
+-- A procedure used in the deposit trigger to buy funds after a deposit
+---- Makes inserts into OWNS based on what is purchased
+---- Updates balance if there is any leftover deposit money (anything the purchase of funds don't evenly go into)
+---- Inserts temporary trxlog entries for the purchases into trxlog_edits			
+----
+---- Assume that we allocate PERCENT * DEPOSIT dollars for each fund type, excess is stored in CUSTOMER.balance
 
 CREATE OR REPLACE PROCEDURE MakePurchases( login_name VARCHAR2, dep_amnt FLOAT, t_id INT )
 	IS 
@@ -106,6 +122,8 @@ CREATE OR REPLACE PROCEDURE MakePurchases( login_name VARCHAR2, dep_amnt FLOAT, 
 	END;
 /
 						
+-- The trigger to call the MakePurchases procedure
+						
 CREATE OR REPLACE TRIGGER deposit_trigger
 
 	AFTER INSERT
@@ -119,6 +137,9 @@ CREATE OR REPLACE TRIGGER deposit_trigger
 
 	END;
 /
+
+-- A trigger to insert the data in the temporary table trxlog_edits into trxlog, after the insert on trxlog is complete
+---- To avoid recursion, we delete the content of the trxlog_edits table after opening the cursor that holds it's content
 
 CREATE OR REPLACE TRIGGER deposit_trigger_update
 
