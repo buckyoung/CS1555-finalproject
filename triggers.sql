@@ -12,12 +12,30 @@ CREATE OR REPLACE TRIGGER balance_update
 	ON trxlog
 	FOR EACH ROW
 	WHEN ( new.action = 'sell' ) 
+
+	DECLARE
+
+		md_count INT := 0;
+		tr_date DATE;
 	
 	BEGIN
 
-		UPDATE customer 
-		SET balance = ( balance + :new.amount )
-		WHERE login = :new.login;
+		SELECT COUNT(c_date) INTO md_count FROM mutualdate;
+
+		IF md_count > 0 THEN
+
+			SELECT MAX(c_date) INTO tr_date FROM mutualdate;
+
+			IF tr_date = :new.t_date THEN
+
+				UPDATE customer
+				SET balance = ( balance + :new.amount )
+				WHERE login = :new.login;
+
+
+			END IF;
+
+		END IF;
 
 	END;
 /
@@ -29,11 +47,14 @@ CREATE OR REPLACE FUNCTION GrabPrice( symb VARCHAR2 )
 
 	RETURN FLOAT IS
 	ret_price FLOAT := 0;
+	tr_date DATE;
 	t_date DATE;
 
 	BEGIN
 
-		SELECT TO_DATE( ( SELECT * FROM mutualdate where rownum = 1 ), 'DD-MON-YY' ) - 1 INTO t_date FROM dual;
+		SELECT c_date INTO tr_date FROM mutualdate WHERE rownum = 1;
+
+		SELECT MAX(p_date) INTO t_date FROM closingprice WHERE p_date < tr_date;
 	
 		SELECT price INTO ret_price FROM CLOSINGPRICE
 		WHERE ( symbol = symb AND p_date = t_date );
@@ -80,7 +101,7 @@ CREATE OR REPLACE PROCEDURE MakePurchases( login_name VARCHAR2, dep_amnt FLOAT, 
 
 	BEGIN
 
-		SELECT TO_DATE( ( SELECT * FROM mutualdate WHERE rownum = 1 ), 'DD-MON-YY' ) - 1 INTO t_date FROM dual;
+		SELECT MAX(c_date) INTO t_date FROM mutualdate;
 
 		IF NOT pref_cursor%ISOPEN
 			THEN OPEN pref_cursor;
@@ -131,9 +152,26 @@ CREATE OR REPLACE TRIGGER deposit_trigger
 	FOR EACH ROW
 	WHEN ( new.action = 'deposit' )
 
+	DECLARE
+
+		md_count INT := 0;
+		tr_date DATE;
+
 	BEGIN
 
-		MakePurchases( :new.login, :new.amount, :new.trans_id );
+		SELECT COUNT(c_date) INTO md_count FROM mutualdate;
+
+		IF md_count > 0 THEN
+
+			SELECT MAX(c_date) INTO tr_date FROM mutualdate;
+
+			IF tr_date = :new.t_date THEN
+
+				MakePurchases( :new.login, :new.amount, :new.trans_id );
+
+			END IF;
+
+		END IF;
 
 	END;
 /
@@ -197,3 +235,4 @@ INSERT INTO TRXLOG(trans_id, login, symbol, t_date, action, num_shares, price, a
 select balance from customer where login = 'mike';
 INSERT INTO TRXLOG(trans_id, login, symbol, t_date, action, num_shares, price, amount) values(5, 'mike', NULL, '04-APR-14', 'deposit', NULL, NULL, 1000);
 select * from trxlog where trans_id > 5;
+
