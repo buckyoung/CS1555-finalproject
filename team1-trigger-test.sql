@@ -5,7 +5,10 @@
 
 -- For now, we are using the data already in data.sql as a basis for these tests
 
--- Run order: db.sql -> data.sql -> triggers.sql
+-- Run order: team1-db.sql --> team1-data.sql --> team1-triggers.sql --> team1-trigger-test.sql
+-- data and triggers should be able to be run in reversed order (triggers before data), triggers only
+-- trigger if the date in mutualdate is the date in a triggered trxlog action. This way we can load old data into the database without
+-- considering it a live action
 
 select balance from customer where login = 'mike';
 INSERT INTO TRXLOG(trans_id, login, symbol, t_date, action, num_shares, price, amount) values(4, 'mike', 'RE', '04-APR-14', 'sell', 50, 15, 750);
