@@ -2,8 +2,19 @@
  * 	A simple Transaction class which all transaction must extend.
  */
 
+import java.sql.Connection;
+ 
 public class Transaction {
 
+	/*
+	 *		Inheriting classes can call super( Connection var ) in constructor
+	 */
+	public Transaction( Connection connection ) {
+		success = false;
+		results = "";
+		this.connection = connection;
+	}
+	
 	public Transaction() {
 		success = false;
 		results = "";
@@ -22,6 +33,7 @@ public class Transaction {
 	 */
 	public void execute() {}
 	
+	private Connection connection;
 	private String results;
 	private boolean success;
 }
