@@ -33,7 +33,7 @@ public class Transaction {
 	 */
 	public void execute() {}
 	
-	private Connection connection;
-	private String results;
-	private boolean success;
+	protected Connection connection;
+	protected String results;
+	protected boolean success;
 }
