@@ -18,12 +18,14 @@ public class BetterFutures {
 		Connection connection;
 		
 		try{
-			DriverManager.registerDriver (new oracle.jdbc.driver.OracleDriver());
+			DriverManager.registerDriver ( new oracle.jdbc.driver.OracleDriver() );
 			String url = "jdbc:oracle:thin:@class3.cs.pitt.edu:1521:dbclass"; 
 			connection = DriverManager.getConnection(url, "ajc148", "########"); 
 		}
 		catch( Exception e ) { System.out.println("Error connecting to database.  Machine Error: " + e.toString() ); }
 		finally	{ connection.close(); }
+		
+		String selection;
 		
 		while ( !flag ) {
 			
@@ -34,9 +36,9 @@ public class BetterFutures {
 			message = null;
 		
 			System.out.print("Please select --\n1. User login\n2. Admin login\n\nYour selection: ");
-			String selection = br.readLine().trim();
+			selection = br.readLine().trim();
 			
-			if ( selection.compareTo("1") != true && selection.compareTo("2") != true ) {
+			if ( selection.compareTo("1") != 0 && selection.compareTo("2") != 0 ) {
 				message = "Selection invalid, please type the number corresponding to the action you wish to select\n\n";
 			}
 			else {
