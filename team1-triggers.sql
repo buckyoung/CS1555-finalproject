@@ -235,4 +235,3 @@ INSERT INTO TRXLOG(trans_id, login, symbol, t_date, action, num_shares, price, a
 select balance from customer where login = 'mike';
 INSERT INTO TRXLOG(trans_id, login, symbol, t_date, action, num_shares, price, amount) values(5, 'mike', NULL, '04-APR-14', 'deposit', NULL, NULL, 1000);
 select * from trxlog where trans_id > 5;
-
