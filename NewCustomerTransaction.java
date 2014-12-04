@@ -1,4 +1,7 @@
 import java.sql.*;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.IOException;
 
 public class NewCustomerTransaction extends Transaction {
 
@@ -30,37 +33,49 @@ public class NewCustomerTransaction extends Transaction {
 			}
 		}
 		
+		return nameAvailable;
 	}
 
 	public void execute() {
 	
 		BufferedReader br = new BufferedReader( new InputStreamReader( System.in ) );
+		String name = "";
+		String address = "";
+		String email = "";
+		String password = "";
+		String userType = "";
 		
-		System.out.println( "\nPlease enter your name: " );
-		String name = br.readLine().trim();
-		System.out.println( "Please enter your address: " );
-		String address = br.readLine().trim();
-		System.out.println( "\nPlease enter your email: " );
-		String email = br.readLine().trim();
-		while ( nameConfirmed() == false );
-		System.out.println( "\nPlease enter your password: " );
-		String password = br.readLine().trim();
-		System.out.println( "\nUser is admin? (y/n): " );
-		String userType = br.readLine().trim();
+		try {
+			System.out.println( "\nPlease enter your name: " );
+			name = br.readLine().trim();
+			System.out.println( "Please enter your address: " );
+			address = br.readLine().trim();
+			System.out.println( "\nPlease enter your email: " );
+			email = br.readLine().trim();
+			while ( nameConfirmed() == false );
+			System.out.println( "\nPlease enter your password: " );
+			password = br.readLine().trim();
+			System.out.println( "\nUser is admin? (y/n): " );
+			userType = br.readLine().trim();
+		}
+		catch ( IOException e ) {
+			System.out.println( "IOException: " + e.toString() );
+		}
 		
-	 	boolean isAdmin = ( userType.toLowerCase().charAt(0) == 'y' ) true : false;
+	 	boolean isAdmin = ( userType.toLowerCase().charAt(0) == 'y' ) ? true : false;
 		
 		try {
 			statement = connection.createStatement();
 			
-			String query
-			if ( isAdmin )
-				query = "INSERT INTO admin () VALUES ()";
-			else
-				query = "INSERT INTO customer () VALUES ()";
-				
-			resultSet = statement.executeQuery( query );
+			String query;
 			
+			if ( isAdmin )
+				query = "INSERT INTO administrator (login, name, email, address, password) VALUES ('" + username + "','" + name + "','" + email + "','" + address + "','" + password + "')";
+			else
+				query = "INSERT INTO customer (login, name, email, address, password, balance) VALUES ('" + username + "','" + name + "','" + email + "','" + address + "','" + password + "',0)";
+				
+			statement.executeQuery( query );
+			success = true;
 		}
 		catch ( SQLException e ) {
 			System.out.println( "Error validating user. Machine error: " + e.toString() );

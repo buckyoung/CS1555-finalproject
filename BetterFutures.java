@@ -2,6 +2,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.text.ParseException;
 import java.sql.*;
+import java.io.IOException;
 
 public class BetterFutures {
 
@@ -12,10 +13,10 @@ public class BetterFutures {
 		boolean isAdmin = false;
 		boolean flag = false;
 		BufferedReader br = new BufferedReader( new InputStreamReader( System.in ) );
-		Transaction action;
+		Transaction action = null;
 		String message = null;
 		int selectionValue = 0;
-		Connection connection;
+		Connection connection = null;
 		
 		try{
 			DriverManager.registerDriver ( new oracle.jdbc.driver.OracleDriver() );
@@ -23,9 +24,16 @@ public class BetterFutures {
 			connection = DriverManager.getConnection(url, "ajc148", "########"); 
 		}
 		catch( Exception e ) { System.out.println("Error connecting to database.  Machine Error: " + e.toString() ); }
-		finally	{ connection.close(); }
+		finally	{ 
+			try {
+				connection.close();
+			}
+			catch ( SQLException e ) {
+				System.out.println( "SQLException: " + e.toString() );
+			}
+		}
 		
-		String selection;
+		String selection = "";
 		
 		while ( !flag ) {
 			
@@ -36,7 +44,12 @@ public class BetterFutures {
 			message = null;
 		
 			System.out.print("Please select --\n1. User login\n2. Admin login\n\nYour selection: ");
-			selection = br.readLine().trim();
+			try {
+				selection = br.readLine().trim();
+			}
+			catch ( IOException e ) {
+				System.out.println( "IOException: " + e.toString() );
+			}		
 			
 			if ( selection.compareTo("1") != 0 && selection.compareTo("2") != 0 ) {
 				message = "Selection invalid, please type the number corresponding to the action you wish to select\n\n";
@@ -52,31 +65,17 @@ public class BetterFutures {
 		}
 		
 		flag = false;
-		
-		String loginType = ( selectionValue == 1 ) ? "Admin login --" : "User login --";
+		message = "";
 		
 		while ( !flag ) {
 			
-			if ( message != null ) {
-				System.out.print( message );
-			}
+			System.out.print( message );	
 			
-			message = null;
-			
-			System.out.print("\n" + loginType + "\n\nUsername:\t");
-			String username = br.readLine().trim();
-			
-			System.out.print("\nPassword:\t");
-			String password = br.readLine().trim();
-			
-			action = new LoginTransaction( connection, username, password, selectionValue );
+			action = new LoginTransaction( connection, selectionValue );
 			action.execute();
 			
 			flag = action.isSuccessful();
-			
-			if ( !flag ) {
-				message = "Login failed.\n\n";
-			}
+			System.out.println( action.toString() );
 		}
 		
 		boolean exitFlag = false;
@@ -109,7 +108,14 @@ public class BetterFutures {
 		while ( !exitFlag ) {
 			
 			System.out.print( selectionMsg );
-			selection = br.readLine().trim();
+			
+			try {
+				selection = br.readLine().trim();
+			}
+			catch ( IOException e ) {
+				System.out.println( "IOException: " + e.toString() );
+			}
+					
 			try {
 				selectionValue = Integer.parseInt( selection );
 			}
@@ -128,22 +134,61 @@ public class BetterFutures {
 				//		Thus we need to add an offset to the selected value
 				//		If they are an admin so user actions and admin actions don't overlap
 				if ( isAdmin )
-					selectionValue += 8;
+					selectionValue += 7;
 					
 				switch ( selectionValue ) {
-					case 1:
+					case 2:
 						action = new BrowseFundsTransaction( connection );
 						break;
-					// so forth, so on... should be 12 cases
+					case 3:
+						action = new SearchFundsTransaction( connection );
+						break;
+					case 4:
+						action = new InvestTransaction( connection );
+						break;
+					case 5:
+						action = new SellSharesTransaction( connection );
+						break;
+					case 6:
+						action = new BuySharesTransaction( connection );
+						break;
+					case 7:
+						action = new ChangeAllocationTransaction( connection );
+						break;
+					case 8:
+						action = new ViewPortfolioTransaction( connection );
+						break;
+					case 9:
+						action = new NewCustomerTransaction( connection );
+						break;
+					case 10:
+						action = new UpdateQuotesTransaction( connection );
+						break;
+					case 11:
+						action = new AddFundTransaction( connection );
+						break;
+					case 12:
+						action = new UpdateDateTimeTransaction( connection );
+						break;
+					case 13:
+						action = new ViewStatisticsTransaction( connection );
+						break;
 					default:
 						break;
 				}
 			
 				action.execute();
+				System.out.println( action.toString() );
 				
 			}
 			
 		}
+		try {
+			br.close();
+		}
+		catch ( IOException e ) {}
+	
+		return;
 
 	}
 	
