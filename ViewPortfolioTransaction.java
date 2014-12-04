@@ -10,8 +10,8 @@ public class ViewPortfolioTransaction extends Transaction {
 		
 		// get relevant data here from user
 		
-		Statement statement;
-		ResultSet resultSet;
+		Statement statement = null;
+		ResultSet resultSet = null;
 
 		try {
 			statement = connection.createStatement();
