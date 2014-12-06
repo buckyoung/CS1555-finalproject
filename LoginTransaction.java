@@ -18,7 +18,7 @@ public class LoginTransaction extends Transaction {
 		BufferedReader br = new BufferedReader( new InputStreamReader( System.in ) );
 		String username = "";
 		String password = "";	
-		String loginPrompt = ( loginType == 1 ) ? "Admin login --" : "User login --";
+		String loginPrompt = ( loginType == 2 ) ? "Admin login --" : "User login --";
 		
 		try {
 			System.out.print("\n" + loginPrompt + "\n\nUsername:\t");
@@ -36,7 +36,7 @@ public class LoginTransaction extends Transaction {
 
 		try {
 			statement = connection.createStatement();
-			String query = "SELECT password FROM customer WHERE login = " + username + ";";
+			String query = ( loginType == 2 )?"SELECT password FROM administrator WHERE login = '" + username + "'":"SELECT password FROM customer WHERE login = '" + username + "'";
 			resultSet = statement.executeQuery( query );
 			
 			resultSet.next();
