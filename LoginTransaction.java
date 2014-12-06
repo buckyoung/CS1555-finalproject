@@ -1,16 +1,38 @@
+import java.sql.*;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.IOException;
+
 public class LoginTransaction extends Transaction {
 
-	public LoginTransaction( Connection connection, String username, String password, int loginType ) {
+	public LoginTransaction( Connection connection, int loginType ) {
 		super( connection );
-		this.username = username;
-		this.password = password;
 		this.loginType = loginType;
 	}
 
 	public void execute() {
 		
-		Statement statement;
-		ResultSet resultSet;
+		Statement statement = null;
+		ResultSet resultSet = null;
+		
+		BufferedReader br = new BufferedReader( new InputStreamReader( System.in ) );
+		String username = "";
+		String password = "";	
+		String loginPrompt = ( loginType == 1 ) ? "Admin login --" : "User login --";
+		
+		try {
+			System.out.print("\n" + loginPrompt + "\n\nUsername:\t");
+			username = br.readLine().trim();
+			System.out.print("\nPassword:\t");
+			password = br.readLine().trim();
+		}
+		catch ( IOException e ) {
+			System.out.println( "IOException: " + e.toString() );
+			try { 
+				br.close();
+			} catch ( IOException ex ){}
+			System.exit(0);
+		}
 
 		try {
 			statement = connection.createStatement();
@@ -24,20 +46,20 @@ public class LoginTransaction extends Transaction {
 			success = ( compare == 0 ) ? true : false;
 		}
 		catch ( SQLException e ) {
-			System.out.println( "Error validating user. Machine error: " + e.toString() );
+			results = "Error validating user. Machine error: " + e.toString();
+			success = false;
+			return;
 		}
 		finally {
 			try {
 				if (statement != null) statement.close();
 			} catch (SQLException e) {
-				System.out.println( "Cannot close Statement. Machine error: " + e.toString() );
+				results = "Cannot close Statement. Machine error: " + e.toString();
 			}
 		}
 		
 		results = ( success ) ? "Logged in successfully!" : "Login attempt failed.";
 	}
 	
-	private String username;
-	private String password;
 	private int loginType;
 }
