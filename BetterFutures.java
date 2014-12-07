@@ -195,6 +195,9 @@ public class BetterFutures {
 		catch ( SQLException e ) {
 			System.out.println( "SQLException: " + e.toString() );
 		}
+
+		System.out.println("Bye!");
+
 		return;
 
 	}
