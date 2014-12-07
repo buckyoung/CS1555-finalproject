@@ -21,7 +21,7 @@ public class BetterFutures {
 		try{
 			DriverManager.registerDriver ( new oracle.jdbc.driver.OracleDriver() );
 			String url = "jdbc:oracle:thin:@class3.cs.pitt.edu:1521:dbclass"; 
-			connection = DriverManager.getConnection(url, "bcy3", "3471045"); 
+			connection = DriverManager.getConnection(url, "bcy3", "xxxxxx"); 
 		}
 		catch( Exception e ) { System.out.println("Error connecting to database.  Machine Error: " + e.toString() ); }
 		/*finally	{ 
