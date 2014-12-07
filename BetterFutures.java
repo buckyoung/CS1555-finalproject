@@ -21,7 +21,7 @@ public class BetterFutures {
 		try{
 			DriverManager.registerDriver ( new oracle.jdbc.driver.OracleDriver() );
 			String url = "jdbc:oracle:thin:@class3.cs.pitt.edu:1521:dbclass"; 
-			connection = DriverManager.getConnection(url, "bcy3", "########"); 
+			connection = DriverManager.getConnection(url, "bcy3", "3471045"); 
 		}
 		catch( Exception e ) { System.out.println("Error connecting to database.  Machine Error: " + e.toString() ); }
 		/*finally	{ 
@@ -86,7 +86,7 @@ public class BetterFutures {
 			selectionMsg = "\nSelect an action:\n\n";
 			selectionMsg += "1. Exit\n";
 			selectionMsg += "2. Browse Mutual Funds\n";
-			selectionMsg += "3. Search Mutual Funds by name\n";
+			selectionMsg += "3. Search Mutual Fund Descriptions\n";
 			selectionMsg += "4. Invest\n";
 			selectionMsg += "5. Selling Shares\n";
 			selectionMsg += "6. Buying Shares\n";
@@ -183,13 +183,40 @@ public class BetterFutures {
 			}
 			
 		}
+		// Wrap everything up
 		try {
 			br.close();
 		}
 		catch ( IOException e ) {}
-	
+
+		try {
+			connection.close();
+		}
+		catch ( SQLException e ) {
+			System.out.println( "SQLException: " + e.toString() );
+		}
 		return;
 
+	}
+
+	public static String currentUser = ""; // save for TRXLOG insertions // set in LoginTransactions.java 
+
+	//Helper function for all results
+	public static void printRows(ResultSet resultSet){
+		try{
+			ResultSetMetaData rsmd = resultSet.getMetaData();
+			int numCols = rsmd.getColumnCount();
+			while(resultSet.next()){
+				for( int i=1; i <= numCols; i++ ){
+					if (i > 1) System.out.print(",\t");
+					System.out.print(resultSet.getString(i));
+				}
+				System.out.println();
+
+			}
+		} catch( SQLException e ) {
+			System.out.println( "SQLException while printing rows: " + e.toString() );
+		}
 	}
 	
 }
