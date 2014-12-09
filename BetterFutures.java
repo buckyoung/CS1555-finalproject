@@ -21,7 +21,7 @@ public class BetterFutures {
 		try{
 			DriverManager.registerDriver( new oracle.jdbc.driver.OracleDriver() );
 			String url = "jdbc:oracle:thin:@class3.cs.pitt.edu:1521:dbclass"; 
-			connection = DriverManager.getConnection(url, "ajc148", "3861324"); 
+			connection = DriverManager.getConnection(url, "bcy3", "3471045"); 
 		}
 		catch( Exception e ) { System.out.println("Error connecting to database.  Machine Error: " + e.toString() ); }
 		
@@ -92,11 +92,11 @@ public class BetterFutures {
 			selectionMsg = "\nSelect an action:\n\n";
 			selectionMsg += "1. Exit\n";
 			selectionMsg += "2. Browse Mutual Funds\n";
-			selectionMsg += "3. Search Mutual Fund Descriptions\n";
-			selectionMsg += "4. Invest\n";
-			selectionMsg += "5. Selling Shares\n";
-			selectionMsg += "6. Buying Shares\n";
-			selectionMsg += "7. Change Allocation Preference\n";	
+			selectionMsg += "3. Search Mutual Funds by Description\n";
+			selectionMsg += "4. Deposit Money for Automatic Investing\n";
+			selectionMsg += "5. Sell Shares\n";
+			selectionMsg += "6. Buy Shares\n";
+			selectionMsg += "7. Change My Allocation Preferences\n";	
 			selectionMsg += "8. View My Portfolio\n\n";
 		}
 		else {
