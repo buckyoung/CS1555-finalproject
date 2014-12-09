@@ -74,7 +74,7 @@ public class ChangeAllocationTransaction extends Transaction {
 		resultSet = null;
 		try{
 			//find a date within the same month, same year, and isnt in the future
-			query = "SELECT p_date FROM allocation WHERE to_char(p_date, 'YY') = to_char(TIMESTAMP '"+mutualDate+"', 'YY') and to_char(p_date, 'MM') = to_char(TIMESTAMP '"+mutualDate+"', 'MM') and to_char(p_date, 'DD') <= to_char(TIMESTAMP '"+mutualDate+"', 'DD')";
+			query = "SELECT p_date FROM allocation WHERE to_char(p_date, 'YY') = to_char(TIMESTAMP '"+mutualDate+"', 'YY') and to_char(p_date, 'MM') = to_char(TIMESTAMP '"+mutualDate+"', 'MM') and to_char(p_date, 'DD') <= to_char(TIMESTAMP '"+mutualDate+"', 'DD') AND login='"+BetterFutures.getCurrentUser()+"'";
 			resultSet = statement.executeQuery( query );
 			
 			//return if there is a date
@@ -89,6 +89,25 @@ public class ChangeAllocationTransaction extends Transaction {
 		}
 
 		//Alright, we have proven that it is ok to allocate, prompt user to get symbols and percentages to construct the ArrayList
+
+		//First print available SYMBOLS for reverence 
+		try {
+			query = "SELECT name, symbol FROM mutualfund";
+			resultSet = statement.executeQuery( query );
+			
+			System.out.println("\n= = == ==== LIST OF MUTUAL FUNDS ==== == = =");
+
+			while ( resultSet.next() ) {
+				System.out.println( resultSet.getString(1) + ": " + resultSet.getString(2) );
+			}
+
+			System.out.println("= = == ============================== == = =");
+		}
+		catch ( SQLException e ) {
+			System.out.println( "Error retrieving reference names and symbols. Machine error: " + e.toString() );
+		}
+
+
 		while(percentageAvailable > 0){
 
 			System.out.println("\nPercent left to allocate: "+percentageAvailable+"%");
@@ -97,7 +116,7 @@ public class ChangeAllocationTransaction extends Transaction {
 		 		System.out.println("What symbol?");
 				symbol = br.readLine().toLowerCase().trim();
 
-				System.out.println("What percentage?");
+				System.out.println("What percentage? (Format: 50)");
 				percentage = br.readLine().toLowerCase().trim();
 		 		percentageValue = Integer.parseInt(percentage);
 
@@ -132,8 +151,11 @@ public class ChangeAllocationTransaction extends Transaction {
 			
 			//Prefers table
 			for(Allocation a : allocationList){
-				System.out.println("a.sym, a.per "+a.getSymbol()+"    ."+a.getPercentage());
-				query = "INSERT INTO PREFERS(allocation_no, symbol, percentage) values("+newAllocId+", '"+a.getSymbol()+"', ."+a.getPercentage()+")";
+				if(a.getPercentage() == 100){
+					query = "INSERT INTO PREFERS(allocation_no, symbol, percentage) values("+newAllocId+", '"+a.getSymbol()+"', 1.00)"; //no decimal point for 100!
+				} else {
+					query = "INSERT INTO PREFERS(allocation_no, symbol, percentage) values("+newAllocId+", '"+a.getSymbol()+"', ."+a.getPercentage()+")";
+				}
 
 				resultSet = statement.executeQuery( query );
 			}

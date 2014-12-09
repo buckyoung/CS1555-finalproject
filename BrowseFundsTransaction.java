@@ -87,6 +87,7 @@ public class BrowseFundsTransaction extends Transaction {
 
 			//Print results
 			printRows(resultSet);
+			
 		}
 		catch ( SQLException e ) {
 			System.out.println( "Error with browse query. Machine error: " + e.toString() );
