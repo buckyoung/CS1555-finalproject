@@ -24,15 +24,6 @@ public class BetterFutures {
 			connection = DriverManager.getConnection(url, "bcy3", "3471045"); 
 		}
 		catch( Exception e ) { System.out.println("Error connecting to database.  Machine Error: " + e.toString() ); }
-		/*finally	{ 
-			try {
-				connection.close();
-			}
-			catch ( SQLException e ) {
-				System.out.println( "SQLException: " + e.toString() );
-			}
-		}*/
-		
 		
 		String selection = "";
 
@@ -124,6 +115,8 @@ public class BetterFutures {
 			
 			System.out.print( selectionMsg );
 			
+			br = new BufferedReader( new InputStreamReader( System.in ) );
+
 			try {
 				selection = br.readLine().trim();
 			}
@@ -165,7 +158,7 @@ public class BetterFutures {
 						action = new SellSharesTransaction( connection );
 						break;
 					case 6:
-						action = new BuySharesTransaction( connection );
+						action = new BuySharesTransaction( connection, getCurrentUser() );
 						break;
 					case 7:
 						action = new ChangeAllocationTransaction( connection );

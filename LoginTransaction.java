@@ -28,10 +28,6 @@ public class LoginTransaction extends Transaction {
 		}
 		catch ( IOException e ) {
 			System.out.println( "IOException: " + e.toString() );
-			try { 
-				br.close();
-			} catch ( IOException ex ){}
-			System.exit(0);
 		}
 
 		try {
