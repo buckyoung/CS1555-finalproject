@@ -13,8 +13,6 @@ public class AddFundTransaction extends Transaction {
 
 	public void execute() {
 		
-		// get relevant data here from user
-		
 		Statement statement = null;
 		ResultSet resultSet = null;
 
@@ -27,15 +25,15 @@ public class AddFundTransaction extends Transaction {
 		Date date = null;
 		
 		try {
-			System.out.print( "Please enter the name of the new mutual fund: " );
+			System.out.print( "\nPlease enter the name of the new mutual fund: " );
 			fundName = br.readLine().trim();
-			System.out.print( "\nPlease enter the symbol of the mutual fund to be added: " );
+			System.out.print( "Please enter the symbol of the mutual fund to be added: " );
 			symbol = br.readLine().trim();
-			System.out.print( "\nPlease enter the category of the new fund: " );
+			System.out.print( "Please enter the category of the new fund: " );
 			category = br.readLine().trim();
-			System.out.print( "\nPlease enter the description fo the new fund: ");
+			System.out.print( "Please enter the description fo the new fund: ");
 			description = br.readLine().trim();
-			System.out.print( "\nPlease enter an initial price for the fund: ");
+			System.out.print( "Please enter an initial price for the fund: ");
 			price = br.readLine().trim();
 			
 			try {
@@ -43,7 +41,7 @@ public class AddFundTransaction extends Transaction {
 				String query = "SELECT MAX(c_date) FROM mutualdate";
 				resultSet = statement.executeQuery( query );
 				resultSet.next();
-				date = resultSet.getDate(0);
+				date = resultSet.getDate(1);
 			}
 			catch ( SQLException e ) {
 				System.out.println( "Error validating user. Machine error: " + e.toString() );
@@ -73,18 +71,20 @@ public class AddFundTransaction extends Transaction {
 
 		try {
 			statement = connection.createStatement();
-			String query = "SELECT COUNT(*) FROM mutualfund WHERE symbol = " + symbol;
+			String query = "SELECT COUNT(*) FROM mutualfund WHERE symbol = '" + symbol + "'";
 			resultSet = statement.executeQuery( query );
 			
-			if ( resultSet.getInt(0) == 1 ) {
-				success = false;
-				results = "Add mutual fund failed. Fund with symbol '" + symbol + "' already exists.";
-				return;
+			if ( resultSet.next() ) {
+				if ( resultSet.getInt(1) == 1 ) {
+					success = false;
+					results = "Add mutual fund failed. Fund with symbol '" + symbol + "' already exists.";
+					return;
+				}
 			}
 			
-			query = "INSERT INTO mutualfund (symbol, name, description, category, c_date) VALUES ('" + symbol + "','" + fundName + "','" + description + "','" + category + "','" + date.toString() + "')";
+			query = "INSERT INTO mutualfund (symbol, name, description, category, c_date) VALUES ('" + symbol + "','" + fundName + "','" + description + "','" + category + "', ( select to_date( '" + date.toString() + "', 'yyyy-mm-dd' ) from dual ) )";
 			statement.executeQuery( query );
-			query = "INSERT INTO closingprice (symbol, price, p_date) VALUES ('" + symbol + "'," + priceValue + ",'" + date.toString() + "')";
+			query = "INSERT INTO closingprice (symbol, price, p_date) VALUES ('" + symbol + "'," + priceValue + ", ( select to_date( '" + date.toString() + "', 'yyyy-mm-dd' ) from dual ) )";
 			statement.executeQuery( query );			
 		}
 		catch ( SQLException e ) {
@@ -98,6 +98,9 @@ public class AddFundTransaction extends Transaction {
 			}
 		}
 		
+		success = true;
+		results = "Fund successfully added!";
+
 	}
 
 }

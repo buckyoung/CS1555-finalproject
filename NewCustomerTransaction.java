@@ -12,10 +12,13 @@ public class NewCustomerTransaction extends Transaction {
 	private boolean nameConfirmed() {
 	
 		boolean nameAvailable = false;
-	
+		BufferedReader br = new BufferedReader( new InputStreamReader( System.in ) );
+
 		try {
+			System.out.print( "\nEnter their username: " );
+			username = br.readLine().trim();
 			statement = connection.createStatement();
-			String query = "SELECT COUNT(*) FROM customer WHERE name";
+			String query = "SELECT COUNT(*) FROM customer WHERE name = '" + username + "'";
 			resultSet = statement.executeQuery( query );
 			resultSet.next();
 			
@@ -24,6 +27,9 @@ public class NewCustomerTransaction extends Transaction {
 		}
 		catch ( SQLException e ) {
 			System.out.println( "Error validating user. Machine error: " + e.toString() );
+		}
+		catch ( IOException e ) {
+			System.out.println(e.toString());
 		}
 		finally {
 			try {
@@ -46,20 +52,27 @@ public class NewCustomerTransaction extends Transaction {
 		String userType = "";
 		
 		try {
-			System.out.println( "\nPlease enter your name: " );
+			System.out.print( "\nPlease enter the new user's name: " );
 			name = br.readLine().trim();
-			System.out.println( "Please enter your address: " );
+			System.out.print( "Please enter their address: " );
 			address = br.readLine().trim();
-			System.out.println( "\nPlease enter your email: " );
+			System.out.print( "\nPlease enter their email: " );
 			email = br.readLine().trim();
 			while ( nameConfirmed() == false );
-			System.out.println( "\nPlease enter your password: " );
+			System.out.print( "\nPlease enter their password: " );
 			password = br.readLine().trim();
-			System.out.println( "\nUser is admin? (y/n): " );
+			System.out.print( "\nUser is admin? (y/n): " );
 			userType = br.readLine().trim();
 		}
 		catch ( IOException e ) {
 			System.out.println( "IOException: " + e.toString() );
+		}
+		finally {
+			try {
+				br.close();
+			} catch ( IOException e ) {
+				System.out.println(e.toString());
+			}
 		}
 		
 	 	boolean isAdmin = ( userType.toLowerCase().charAt(0) == 'y' ) ? true : false;

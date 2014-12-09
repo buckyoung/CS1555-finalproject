@@ -3,7 +3,8 @@
  */
 
 import java.sql.Connection;
- 
+import java.sql.*; 
+
 public class Transaction {
 
 	/*
@@ -15,6 +16,25 @@ public class Transaction {
 		this.connection = connection;
 	}
 	
+	private Connection createNewConnection() {
+		Connection connection = null;
+		try {
+			DriverManager.registerDriver( new oracle.jdbc.driver.OracleDriver() );
+			String url = "jdbc:oracle:thin:@class3.cs.pitt.edu:1521:dbclass";
+			connection = DriverManager.getConnection(url, "ajc148", "3861324");
+		} catch ( Exception e ) {
+			System.out.println(e.toString());
+		} finally {
+			try {
+				connection.close();
+			}
+			catch ( SQLException e ) {
+				System.out.println( e.toString() );
+			}
+		}
+		return connection;
+	}
+
 	public Transaction() {
 		success = false;
 		results = "";

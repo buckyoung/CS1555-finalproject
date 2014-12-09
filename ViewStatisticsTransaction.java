@@ -65,16 +65,16 @@ public class ViewStatisticsTransaction extends Transaction {
 			resultSet = statement.executeQuery( query );
 			resultSet.next();
 			Date date = resultSet.getDate(1);
-			query = "select * from ( select * from ( select category, sum(sum_shares) as sh_count from mutualfund, ( select symbol as sym, sum(num_shares) as sum_shares from trxlog where action = 'sell' and t_date >= add_months( " + date.toString() + ", -" + numMonths + ") group by symbol )where symbol = sym group by category )order by sh_count desc ) where rownum <= " + numCategories;
+			query = "select * from ( select * from ( select category, sum(sum_shares) as sh_count from mutualfund, ( select symbol as sym, sum(num_shares) as sum_shares from trxlog where action = 'sell' and t_date >= add_months( ( select to_date( '" + date.toString() + "', 'yyyy-mm-dd') from dual ), -" + numMonths + ") group by symbol )where symbol = sym group by category )order by sh_count desc ) where rownum <= " + numCategories;
 			resultSet = statement.executeQuery( query );
 			
-			System.out.println("Category\t\tNumber of shares\n--------------------------------------");
+			System.out.println("Category\tNumber of shares\n--------------------------------------");
 			
 			while ( resultSet.next() ) {
 				System.out.println( resultSet.getString(1) + "\t\t" + resultSet.getInt(2) );
 			}
 			
-			query = "select * from ( select name, sum_amounts from customer, ( select * from ( select login as username, sum(amount) as sum_amounts from trxlog where t_date >= add_months( " + date.toString() + ", -" + numMonths + ") group by login ) order by sum_amounts desc ) where login = username ) where rownum <= " + numInvestors;
+			query = "select * from ( select name, sum_amounts from customer, ( select * from ( select login as username, sum(amount) as sum_amounts from trxlog where t_date >= add_months( ( select to_date( '" + date.toString() + "', 'yyyy-mm-dd' ) from dual ), -" + numMonths + ") group by login ) order by sum_amounts desc ) where login = username ) where rownum <= " + numInvestors;
 			resultSet = statement.executeQuery( query );
 			
 			System.out.println("Name\t\tInvested Amount\n------------------------------------");
