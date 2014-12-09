@@ -37,12 +37,6 @@ public class ViewStatisticsTransaction extends Transaction {
 			System.out.println( "IOException: " + e.toString() );
 			System.exit(0);
 		}
-		finally {
-			// Always close the BufferedReader
-			try {
-				br.close();
-			} catch ( IOException ex ) {}
-		}
 
 		int numMonths = 0;
 		int numCategories = 0;
@@ -77,7 +71,7 @@ public class ViewStatisticsTransaction extends Transaction {
 			query = "select * from ( select name, sum_amounts from customer, ( select * from ( select login as username, sum(amount) as sum_amounts from trxlog where t_date >= add_months( ( select to_date( '" + date.toString() + "', 'yyyy-mm-dd' ) from dual ), -" + numMonths + ") group by login ) order by sum_amounts desc ) where login = username ) where rownum <= " + numInvestors;
 			resultSet = statement.executeQuery( query );
 			
-			System.out.println("Name\t\tInvested Amount\n------------------------------------");
+			System.out.println("\nName\t\tInvested Amount\n------------------------------------");
 			
 			while ( resultSet.next() ) {
 				System.out.println( resultSet.getString(1) + "\t\t" + resultSet.getFloat(2) );
@@ -90,6 +84,7 @@ public class ViewStatisticsTransaction extends Transaction {
 			// Don't attempt to recover
 		
 			System.out.println( "Error validating user. Machine error: " + e.toString() );
+			System.exit(0);
 		}
 		finally {
 			try {
@@ -98,6 +93,7 @@ public class ViewStatisticsTransaction extends Transaction {
 			} 
 			catch (SQLException e) {
 				System.out.println( "Cannot close Statement. Machine error: " + e.toString() );
+				System.exit(0);
 			}
 		}
 	}
