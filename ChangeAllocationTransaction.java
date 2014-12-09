@@ -122,10 +122,8 @@ public class ChangeAllocationTransaction extends Transaction {
 		//Finally, INSERT into allocation and prefers table
 		try{
 
-			System.out.println("DEBUG: newAllocId, currentUser, mutualDate "+newAllocId+" "+BetterFutures.currentUser+" "+mutualDate);
-
 			//Allocations table
-			query = "INSERT INTO ALLOCATION(allocation_no, login, p_date) values("+newAllocId+", '"+BetterFutures.currentUser+"', TIMESTAMP '"+mutualDate+"' )";
+			query = "INSERT INTO ALLOCATION(allocation_no, login, p_date) values("+newAllocId+", '"+BetterFutures.getCurrentUser()+"', TIMESTAMP '"+mutualDate+"' )";
 			resultSet = statement.executeQuery( query );
 			
 			//Commit;

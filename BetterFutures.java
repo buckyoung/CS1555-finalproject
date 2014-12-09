@@ -21,7 +21,7 @@ public class BetterFutures {
 		try{
 			DriverManager.registerDriver ( new oracle.jdbc.driver.OracleDriver() );
 			String url = "jdbc:oracle:thin:@class3.cs.pitt.edu:1521:dbclass"; 
-			connection = DriverManager.getConnection(url, "bcy3", "xxxxxx"); 
+			connection = DriverManager.getConnection(url, "bcy3", "------"); 
 		}
 		catch( Exception e ) { System.out.println("Error connecting to database.  Machine Error: " + e.toString() ); }
 		/*finally	{ 
@@ -202,24 +202,16 @@ public class BetterFutures {
 
 	}
 
-	public static String currentUser = ""; // save for TRXLOG insertions // set in LoginTransactions.java 
+	private static String currentUser = ""; // save for TRXLOG insertions 
 
-	//Helper function for all results
-	public static void printRows(ResultSet resultSet){
-		try{
-			ResultSetMetaData rsmd = resultSet.getMetaData();
-			int numCols = rsmd.getColumnCount();
-			while(resultSet.next()){
-				for( int i=1; i <= numCols; i++ ){
-					if (i > 1) System.out.print(",\t");
-					System.out.print(resultSet.getString(i));
-				}
-				System.out.println();
-
-			}
-		} catch( SQLException e ) {
-			System.out.println( "SQLException while printing rows: " + e.toString() );
-		}
+	public static void setCurrentUser(String user){ // set in LoginTransactions.java 
+		this.currentUser = user;
 	}
+
+	public static String getCurrentUser(){
+		return this.currentUser;
+	}
+
+
 	
 }
