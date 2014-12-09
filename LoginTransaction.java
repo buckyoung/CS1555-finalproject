@@ -61,7 +61,7 @@ public class LoginTransaction extends Transaction {
 		results = ( success ) ? "Logged in successfully!" : "Login attempt failed.";
 
 		if(success){
-			BetterFutures.currentUser = username; //Save user for TRXLOG inserts
+			BetterFutures.setCurrentUser(username); //Save user for TRXLOG inserts
 		}
 	
 	}

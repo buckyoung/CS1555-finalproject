@@ -74,7 +74,7 @@ public class SearchFundsTransaction extends Transaction {
 			resultSet = statement.executeQuery( query );
 
 			//Print results
-			BetterFutures.printRows(resultSet);
+			printRows(resultSet);
 			
 		}
 		catch ( SQLException e ) {
