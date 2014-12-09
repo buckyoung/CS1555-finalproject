@@ -21,11 +21,18 @@ public class BetterFutures {
 		try{
 			DriverManager.registerDriver( new oracle.jdbc.driver.OracleDriver() );
 			String url = "jdbc:oracle:thin:@class3.cs.pitt.edu:1521:dbclass"; 
-			connection = DriverManager.getConnection(url, "ajc148", "3861324"); 
+			connection = DriverManager.getConnection(url, "bcy3", "------"); 
 		}
-		catch( Exception e ) {
-			 System.out.println("Error connecting to database.  Machine Error: " + e.toString() ); 
-		}
+		catch( Exception e ) { System.out.println("Error connecting to database.  Machine Error: " + e.toString() ); }
+		/*finally	{ 
+			try {
+				connection.close();
+			}
+			catch ( SQLException e ) {
+				System.out.println( "SQLException: " + e.toString() );
+			}
+		}*/
+		
 		
 		String selection = "";
 
@@ -94,7 +101,7 @@ public class BetterFutures {
 			selectionMsg = "\nSelect an action:\n\n";
 			selectionMsg += "1. Exit\n";
 			selectionMsg += "2. Browse Mutual Funds\n";
-			selectionMsg += "3. Search Mutual Funds by name\n";
+			selectionMsg += "3. Search Mutual Fund Descriptions\n";
 			selectionMsg += "4. Invest\n";
 			selectionMsg += "5. Selling Shares\n";
 			selectionMsg += "6. Buying Shares\n";
@@ -191,7 +198,7 @@ public class BetterFutures {
 			}
 			
 		}
-
+		
 		try {
 			connection.close();
 			br.close();
@@ -202,5 +209,17 @@ public class BetterFutures {
 		return;
 
 	}
+
+	private static String currentUser = ""; // save for TRXLOG insertions 
+
+	public static void setCurrentUser(String user){ // set in LoginTransactions.java 
+		this.currentUser = user;
+	}
+
+	public static String getCurrentUser(){
+		return this.currentUser;
+	}
+
+
 	
 }

@@ -35,7 +35,7 @@ public class LoginTransaction extends Transaction {
 		}
 
 		try {
-			statement = super.connection.createStatement();
+			statement = connection.createStatement();
 			String tableName = ( loginType == 2 ) ? "administrator" : "customer";
 			String query = "SELECT password FROM " + tableName + " WHERE login = '" + username + "'";
 			resultSet = statement.executeQuery( query );
@@ -67,6 +67,11 @@ public class LoginTransaction extends Transaction {
 		}
 		
 		results = ( success ) ? "Logged in successfully!" : "Login attempt failed.";
+
+		if(success){
+			BetterFutures.setCurrentUser(username); //Save user for TRXLOG inserts
+		}
+	
 	}
 	
 	private int loginType;
