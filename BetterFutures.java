@@ -19,7 +19,7 @@ public class BetterFutures {
 		Connection connection = null;
 		
 		try{
-			DriverManager.registerDriver ( new oracle.jdbc.driver.OracleDriver() );
+			DriverManager.registerDriver( new oracle.jdbc.driver.OracleDriver() );
 			String url = "jdbc:oracle:thin:@class3.cs.pitt.edu:1521:dbclass"; 
 			connection = DriverManager.getConnection(url, "bcy3", "------"); 
 		}
@@ -33,8 +33,22 @@ public class BetterFutures {
 			}
 		}*/
 		
-		String selection = "";
 		
+		String selection = "";
+
+		Statement statement = null;
+		ResultSet resultSet = null;
+
+		try {
+			statement = connection.createStatement();
+			resultSet = statement.executeQuery( "select max(c_date) from mutualdate" );
+			resultSet.next();
+			Date date = resultSet.getDate(1);
+			System.out.println("\nToday's date: " + date.toString() );
+		} catch ( SQLException e ) {
+			System.out.println( e.toString() );
+		}
+
 		while ( !flag ) {
 			
 			if ( message != null ) {
@@ -43,7 +57,8 @@ public class BetterFutures {
 		
 			message = null;
 		
-			System.out.print("Please select --\n1. User login\n2. Admin login\n\nYour selection: ");
+			System.out.print("\nPlease select --\n1. User login\n2. Admin login\n\nYour selection: ");
+
 			try {
 				selection = br.readLine().trim();
 			}
@@ -75,7 +90,7 @@ public class BetterFutures {
 			action.execute();
 			
 			flag = action.isSuccessful();
-			System.out.println( action.toString() );
+			System.out.println( "\n" + action.toString() );
 		}
 		
 		boolean exitFlag = false;
@@ -103,7 +118,7 @@ public class BetterFutures {
 			selectionMsg += "6. View Statistics\n";
 		}
 		
-		selectionMsg += "Your selection: ";
+		selectionMsg += "\nYour selection: ";
 		
 		while ( !exitFlag ) {
 			
@@ -178,26 +193,19 @@ public class BetterFutures {
 				}
 			
 				action.execute();
-				System.out.println( action.toString() );
+				System.out.println( "\n" +  action.toString() );
 				
 			}
 			
 		}
-		// Wrap everything up
+		
 		try {
+			connection.close();
 			br.close();
 		}
 		catch ( IOException e ) {}
-
-		try {
-			connection.close();
-		}
-		catch ( SQLException e ) {
-			System.out.println( "SQLException: " + e.toString() );
-		}
-
-		System.out.println("Bye!");
-
+		catch ( SQLException ex ) {}
+	
 		return;
 
 	}

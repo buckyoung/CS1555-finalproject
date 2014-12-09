@@ -29,7 +29,7 @@ public class UpdateDateTimeTransaction extends Transaction {
 		
 		try {
 			statement = connection.createStatement();
-			String query = "UPDATE mutualdate SET c_date = " + date;
+			String query = "UPDATE mutualdate SET c_date = ( select to_date( '" + date + "', 'yyyy-mm-dd' ) from dual )";
 			statement.executeQuery( query );
 		}
 		catch ( SQLException e ) {
@@ -43,6 +43,9 @@ public class UpdateDateTimeTransaction extends Transaction {
 			}
 		}
 		
+		success = true;
+		results = "Date successfully updated!";
+
 	}
 
 }

@@ -23,7 +23,7 @@ public class LoginTransaction extends Transaction {
 		try {
 			System.out.print("\n" + loginPrompt + "\n\nUsername:\t");
 			username = br.readLine().trim();
-			System.out.print("\nPassword:\t");
+			System.out.print("Password:\t");
 			password = br.readLine().trim();
 		}
 		catch ( IOException e ) {
@@ -36,13 +36,21 @@ public class LoginTransaction extends Transaction {
 
 		try {
 			statement = connection.createStatement();
-			String query = ( loginType == 2 )?"SELECT password FROM administrator WHERE login = '" + username + "'":"SELECT password FROM customer WHERE login = '" + username + "'";
+			String tableName = ( loginType == 2 ) ? "administrator" : "customer";
+			String query = "SELECT password FROM " + tableName + " WHERE login = '" + username + "'";
 			resultSet = statement.executeQuery( query );
-			
-			resultSet.next();
-			
-			int compare = password.compareTo( resultSet.getString( 1 ) );
-			
+
+			int compare = 0;
+
+			if ( resultSet.next() )
+				compare = password.compareTo( resultSet.getString( 1 ) );
+			else {
+				success = false;
+				results = "User '" + username + "' not found.";
+				return;
+			}
+				
+
 			success = ( compare == 0 ) ? true : false;
 		}
 		catch ( SQLException e ) {
