@@ -202,13 +202,13 @@ public class BetterFutures {
 
 	}
 
-	private static String currentUser = ""; // save for TRXLOG insertions // set in LoginTransactions.java 
+	private static String currentUser = ""; // save for TRXLOG insertions 
 
-	public void setCurrentUser(String user){
+	public static void setCurrentUser(String user){ // set in LoginTransactions.java 
 		this.currentUser = user;
 	}
 
-	public String getCurrentUser(){
+	public static String getCurrentUser(){
 		return this.currentUser;
 	}
 
