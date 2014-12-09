@@ -18,6 +18,7 @@ public class UpdateQuotesTransaction extends Transaction {
 		ResultSet resultSet = null;
 
 		BufferedReader br = new BufferedReader( new InputStreamReader( System.in ) );
+		
 		String symbol = "";
 		String date = "";
 		String price = "";
@@ -36,29 +37,67 @@ public class UpdateQuotesTransaction extends Transaction {
 			System.out.println();
 		}
 		catch ( SQLException e ) {
-			//.
+			System.out.println( "SQLException: " + e.toString() );
+			System.exit(0);
 		}
 
 		try {
-			System.out.print( "Please select the mutual fund to be updated by it's symbol: " );
-			symbol = br.readLine().trim().toUpperCase();
+		
+			boolean rightLength = false;
+		
+			while ( !rightLength ) {
+				System.out.print( "Please select the mutual fund to be updated by it's symbol: " );
+				symbol = br.readLine().trim().toUpperCase();
+				
+				try { 
+					statement = connection.createStatement();
+					String query = "Select count(*) from mutualfund where symbol = '" + symbol + "'";
+					resultSet = statement.executeQuery( query );
+					
+					if ( resultSet.next() ) {
+						if ( resultSet.getInt(1) > 0 )
+							rightLength = true;
+						else
+							System.out.println( "Incorrect symbol." );
+					}
+					else {
+						System.out.println( "Incorrect symbol." );
+					}
+				}
+				catch ( SQLException e ) {
+					System.out.println( "SQLException: " + e.toString() );
+					System.exit(0);
+				}
+			}
 			
 			try {
 				statement = connection.createStatement();
 				String query = "SELECT MAX(c_date) FROM mutualdate";
 				resultSet = statement.executeQuery( query );
 				resultSet.next();
-				System.out.print( "\nPlease select the date (in yyyy-mm-dd format) that you wish to change the price for (today's mutual date is: " + resultSet.getDate(1) + "): " );
-				date = br.readLine().trim();
+				
+				rightLength = false;
+				
+				while ( !rightLength ) {
+					System.out.print( "\nPlease select the date (in yyyy-mm-dd format) that you wish to change the price for (today's mutual date is: " + resultSet.getDate(1) + "): " );
+					date = br.readLine().trim();
+				
+					if ( date.matches("((19|20)\\d\\d)-(0?[1-9]|1[012])-(0?[1-9]|[12][0-9]|3[01])") )
+						rightLength = true;
+					else
+						System.out.println( "Date pattern does not match." );
+				}
 			}
 			catch ( SQLException e ) {
 				System.out.println( "Error validating user. Machine error: " + e.toString() );
+				System.exit(0);
 			}
 			finally {
 				try {
 					if (statement != null) statement.close();
 				} catch (SQLException e) {
 					System.out.println( "Cannot close Statement. Machine error: " + e.toString() );
+					System.exit(0);
 				}
 			}
 			
@@ -67,6 +106,7 @@ public class UpdateQuotesTransaction extends Transaction {
 		}
 		catch ( IOException e ) {
 			System.out.println( "IOException: " + e.toString() );
+			System.exit(0);
 		}
 		
 		double priceValue = 0.0;
@@ -75,7 +115,7 @@ public class UpdateQuotesTransaction extends Transaction {
 			priceValue = Double.parseDouble( price );
 		}
 		catch ( NumberFormatException e ) {
-			System.out.println( "Error: Price input is not a number. " + e.toString() );
+			results = "Error: Price input is not a number.";
 			success = false;
 			return;
 		}
@@ -87,12 +127,14 @@ public class UpdateQuotesTransaction extends Transaction {
 		}
 		catch ( SQLException e ) {
 			System.out.println( "Error validating user. Machine error: " + e.toString() );
+			System.exit(0);
 		}
 		finally {
 			try {
 				if (statement != null) statement.close();
 			} catch (SQLException e) {
 				System.out.println( "Cannot close Statement. Machine error: " + e.toString() );
+				System.exit(0);
 			}
 		}
 

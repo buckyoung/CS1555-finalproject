@@ -11,8 +11,6 @@ public class UpdateDateTimeTransaction extends Transaction {
 
 	public void execute() {
 		
-		// get relevant data here from user
-		
 		Statement statement = null;
 		ResultSet resultSet = null;
 
@@ -20,11 +18,21 @@ public class UpdateDateTimeTransaction extends Transaction {
 		BufferedReader br = new BufferedReader( new InputStreamReader ( System.in ) );
 		
 		try {
-			System.out.print( "Enter the new date in YYYY-MM-DD format: " );
-			date = br.readLine().toLowerCase().trim();
+			boolean rightLength = false;
+			
+			while ( !rightLength ) {
+				System.out.print( "Enter the new date in YYYY-MM-DD format: " );
+				date = br.readLine().trim();
+			
+				if ( date.matches("((19|20)\\d\\d)-(0?[1-9]|1[012])-(0?[1-9]|[12][0-9]|3[01])") )
+					rightLength = true;
+				else
+					System.out.println( "Date pattern does not match." );
+			}
 		}
 		catch ( IOException e ) {
 			System.out.println( "IOException: " + e.toString() );
+			System.exit(0);
 		}
 		
 		try {
@@ -34,12 +42,14 @@ public class UpdateDateTimeTransaction extends Transaction {
 		}
 		catch ( SQLException e ) {
 			System.out.println( "Error validating user. Machine error: " + e.toString() );
+			System.exit(0);
 		}
 		finally {
 			try {
 				if (statement != null) statement.close();
 			} catch (SQLException e) {
 				System.out.println( "Cannot close Statement. Machine error: " + e.toString() );
+				System.exit(0);
 			}
 		}
 		
