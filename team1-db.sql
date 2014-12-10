@@ -93,7 +93,6 @@ CREATE TABLE MUTUALDATE(
     CONSTRAINT MUTUALDATE_PK PRIMARY KEY (c_date)
 );
 
-DROP TABLE trxlog_edits;
 DROP FUNCTION GrabPrice;
 DROP PROCEDURE MakePurchases;
 
@@ -159,26 +158,12 @@ CREATE OR REPLACE FUNCTION GrabPrice( symb VARCHAR2 )
 	END;
 /
 
--- A global temporary table whose existence is to get around the mutating table error
-
-CREATE GLOBAL TEMPORARY TABLE trxlog_edits ( 	trans_id INT,
-						login VARCHAR2(10),
-						symbol VARCHAR2(20),
-						t_date DATE,
-						action VARCHAR2(10),
-						num_shares INT,
-						price FLOAT,
-						amount FLOAT )
-			ON COMMIT DELETE ROWS;
-
 -- A procedure used in the deposit trigger to buy funds after a deposit
 ---- Makes inserts into OWNS based on what is purchased
 ---- Updates balance if there is any leftover deposit money (anything the purchase of funds don't evenly go into)
----- Inserts temporary trxlog entries for the purchases into trxlog_edits			
-----
 ---- Assume that we allocate PERCENT * DEPOSIT dollars for each fund type, excess is stored in CUSTOMER.balance
 
-CREATE OR REPLACE PROCEDURE MakePurchases( login_name VARCHAR2, dep_amnt FLOAT, t_id INT )
+CREATE OR REPLACE PROCEDURE MakePurchases( login_name VARCHAR2, dep_amnt FLOAT, x OUT FLOAT )
 	IS 
 
 	CURSOR pref_cursor IS SELECT * FROM prefers
@@ -219,21 +204,17 @@ CREATE OR REPLACE PROCEDURE MakePurchases( login_name VARCHAR2, dep_amnt FLOAT, 
 				VALUES ( login_name, pref_row.symbol, num_shares );
 			END IF;
 
-			INSERT INTO trxlog_edits ( trans_id, login, symbol, t_date, action, num_shares, price, amount)
-				VALUES ( t_id, login_name, pref_row.symbol, t_date, 'buy', num_shares, 
+			INSERT INTO trxlog ( trans_id, login, symbol, t_date, action, num_shares, price, amount)
+				VALUES ( ( select max(trans_id) from trxlog ) + 1, login_name, pref_row.symbol, t_date, 'buy', num_shares, 
 				GrabPrice( pref_row.symbol ), GrabPrice( pref_row.symbol ) * num_shares );
 
 			leftover := leftover + ( partial_dep - ( num_shares * GrabPrice( pref_row.symbol ) ) );
-
-			
 
 		END LOOP;
 
 		CLOSE pref_cursor;
 
-		UPDATE customer
-		SET balance = balance + leftover
-		WHERE login = login_name;
+		x := leftover;
 
 	END;
 /
@@ -242,77 +223,19 @@ CREATE OR REPLACE PROCEDURE MakePurchases( login_name VARCHAR2, dep_amnt FLOAT, 
 						
 CREATE OR REPLACE TRIGGER deposit_trigger
 
-	AFTER INSERT
-	ON trxlog
+	BEFORE UPDATE OF balance
+	ON customer
 	FOR EACH ROW
-	WHEN ( new.action = 'deposit' )
+	WHEN (new.balance > 0)
 
 	DECLARE
 
-		md_count INT := 0;
-		tr_date DATE;
+	x FLOAT := 0;
 
 	BEGIN
 
-		SELECT COUNT(c_date) INTO md_count FROM mutualdate;
+		MakePurchases( :new.login, :new.balance, x );
+		:new.balance := x;
 
-		IF md_count > 0 THEN
-
-			SELECT MAX(c_date) INTO tr_date FROM mutualdate;
-
-			IF tr_date = :new.t_date THEN
-
-				MakePurchases( :new.login, :new.amount, :new.trans_id );
-
-			END IF;
-
-		END IF;
-
-	END;
-/
-
--- A trigger to insert the data in the temporary table trxlog_edits into trxlog, after the insert on trxlog is complete
----- To avoid recursion, we delete the content of the trxlog_edits table after opening the cursor that holds it's content
-
-CREATE OR REPLACE TRIGGER deposit_trigger_update
-
-	AFTER INSERT
-	ON trxlog
-
-	DECLARE
-	
-		CURSOR trxlog_temp IS
-			SELECT * FROM trxlog_edits;
-		trxlog_row trxlog_edits%ROWTYPE;
-		t_id INT := 0;
-		has_rows INT := 0;
-		
-	BEGIN
-
-		SELECT COUNT(*) INTO has_rows FROM trxlog_edits;
-	
-		IF has_rows > 0 THEN
-		
-			IF NOT trxlog_temp%ISOPEN THEN 
-				OPEN trxlog_temp;
-			END IF;
-
-			DELETE FROM trxlog_edits;
-
-			LOOP
-				FETCH trxlog_temp INTO trxlog_row;
-				EXIT WHEN trxlog_temp%NOTFOUND;
-				
-				SELECT MAX(trans_id) + 1 INTO t_id FROM trxlog;
-				
-				INSERT INTO trxlog ( trans_id, login, symbol, t_date, action, num_shares, price, amount )
-					VALUES ( t_id, trxlog_row.login, trxlog_row.symbol, trxlog_row.t_date, trxlog_row.action, trxlog_row.num_shares, trxlog_row.price, trxlog_row.amount );
-
-			END LOOP;
-
-			CLOSE trxlog_temp;
-			
-		END IF;
-		
 	END;
 /
