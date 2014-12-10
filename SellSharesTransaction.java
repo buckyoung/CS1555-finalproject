@@ -1,7 +1,4 @@
 import java.sql.*;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.IOException;
 
 public class SellSharesTransaction extends Transaction {
 
@@ -15,72 +12,13 @@ public class SellSharesTransaction extends Transaction {
 		
 		Statement statement = null;
 		ResultSet resultSet = null;
-		String query = "";
-		int nextTRXid = 0;
-		String symbol = "";
-		String numShares = "";
-		int numSharesValue = 0;
-		int priceValue = 0;
-		String amount = "";
-		float amountValue = 0.0f;
-		String mutualDate = "";
-		boolean flag = false;
-		BufferedReader br = new BufferedReader( new InputStreamReader ( System.in ) );
 
-
-		// Print what the user owns
 		try {
 			statement = connection.createStatement();
-
-			query = "SELECT symbol, shares FROM owns WHERE login='"+BetterFutures.getCurrentUser()+"' ";
-			resultSet = statement.executeQuery( query );
+			//String query = "";
+			//resultSet = statement.executeQuery( query );
 			
-			System.out.println("\n= = == ====  LIST OF OWNED FUNDS ==== == = =");
-
-			while ( resultSet.next() ) {
-				System.out.println( resultSet.getString(1) + ": " + resultSet.getString(2) + " shares");
-			}
-
-			System.out.println("= = == ============================== == = =");
-		}
-		catch ( SQLException e ) {
-			System.out.println( "Error retrieving reference symbols and shares. Machine error: " + e.toString() );
-		}
-		// Get the symbol and numShares to sell
-			//symbol
-		while(!flag){
-			System.out.println("\nEnter the symbol to sell:");
-			try {
-				symbol = br.readLine().trim().toUpperCase();
-				flag = true;
-			}
-			catch ( IOException e ) {
-				System.out.println( "IOException: " + e.toString() );
-			}
-		}
-			//numShares
-		flag = false;
-		while(!flag){
-			System.out.println("\nEnter the number of shares to sell:");
-			try {
-				numShares = br.readLine().trim();
-				numSharesValue = Integer.parseInt(numShares);
-				flag = true;
-			}
-			catch ( IOException e ) {
-				System.out.println( "IOException: " + e.toString() );
-			}
-			catch ( NumberFormatException e ) {
-				System.out.println( "Parsing error: " + e.toString() );
-			}
-		}
-		// Validate transaction (owns that many shares to sell AND a closing price is available before mutual date)
-			//get current date
-		try {
-			query = "SELECT * FROM mutualdate";
-			resultSet = statement.executeQuery(query);
-			resultSet.next();
-			mutualDate = resultSet.getString(1);
+			//resultSet.next();
 		}
 		catch ( SQLException e ) {
 			System.out.println( "Error while getting mutualdate. Machine error: " + e.toString() );
@@ -155,13 +93,12 @@ public class SellSharesTransaction extends Transaction {
 		}
 		finally {
 			try {
-				connection.setAutoCommit(true);
 				if (statement != null) statement.close();
 			} catch (SQLException e) {
-				System.out.println( "Cannot close Statement / set auto commit. Machine error: " + e.toString() );
+				System.out.println( "Cannot close Statement. Machine error: " + e.toString() );
 			}
 		}
-	
+		
 	}
 
 }
