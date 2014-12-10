@@ -139,6 +139,8 @@ public class SellSharesTransaction extends Transaction {
 			query = "INSERT INTO TRXLOG(trans_id, login, symbol, t_date, action, num_shares, price, amount) values("+nextTRXid+", '"+BetterFutures.getCurrentUser()+"', '"+symbol+"', TIMESTAMP '"+mutualDate+"', 'sell', "+numSharesValue+", "+priceValue+", "+amountValue+")";
 			statement.executeQuery( query );
 
+			System.out.println("You sold "+numSharesValue+" shares of '"+symbol+"' at a price of $"+priceValue+" per share. $"+ amountValue+" has been added to your balance.");
+
 			//re-enables
 			query = "ALTER TRIGGER deposit_trigger ENABLE";
 			statement.executeQuery( query );
