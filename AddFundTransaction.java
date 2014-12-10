@@ -18,7 +18,7 @@ public class AddFundTransaction extends Transaction {
 
 		BufferedReader br = new BufferedReader( new InputStreamReader( System.in ) );
 		String symbol = "";
-		String price = "-1";
+		String price = "a";
 		String fundName = "";
 		String category = "";
 		String description = "";
@@ -65,7 +65,7 @@ public class AddFundTransaction extends Transaction {
 			rightLength = false;
 			
 			while ( !rightLength ) {
-				System.out.print( "Please enter the description fo the new fund: ");
+				System.out.print( "Please enter the description of the new fund: ");
 				description = br.readLine().trim();
 			
 				if ( description.length() > 100 )
@@ -104,7 +104,7 @@ public class AddFundTransaction extends Transaction {
 			System.exit(0);
 		}
 		
-		double priceValue = 0.0;
+		double priceValue = -1.0;
 		
 		try {
 			priceValue = Double.parseDouble( price );
@@ -129,13 +129,13 @@ public class AddFundTransaction extends Transaction {
 			query = "INSERT INTO mutualfund (symbol, name, description, category, c_date) VALUES ('" + symbol + "','" + fundName + "','" + description + "','" + category + "', ( select to_date( '" + date.toString() + "', 'yyyy-mm-dd' ) from dual ) )";
 			statement.executeQuery( query );
 			
-			if ( priceValue >= 0 ) {
+			if ( priceValue >= 0.0 ) {
 				query = "INSERT INTO closingprice (symbol, price, p_date) VALUES ('" + symbol + "'," + priceValue + ", ( select to_date( '" + date.toString() + "', 'yyyy-mm-dd' ) from dual ) )";
 				statement.executeQuery( query );			
 			}
 		}
 		catch ( SQLException e ) {
-			System.out.println( "Error validating user. Machine error: " + e.toString() );
+			System.out.println( "Error validating user! Machine error: " + e.toString() );
 		}
 		finally {
 			try {
